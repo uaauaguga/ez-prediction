@@ -40,3 +40,30 @@ tumor.vs.normal.ql <- glmQLFTest(fit.ql, coef=2)
 tumor.vs.normal.de.top50 <- topTags(tumor.vs.normal.ql,n=Inf)
 write.table(tumor.vs.normal.de.top50,"output/features/de.train.txt",sep="\t",quote=FALSE)
 ```
+
+- Instead of differential expression, you can use random forest or other model to perform feature selection
+
+- Use `rfcv` in `randomForest` package to show how perform change as number of features descrease
+```{R}
+library(randomForest)
+exp.mat <- read.table("output/processed/log.cpm.scaled.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+exp.mat <- t(as.matrix(exp.mat)[,train.ids])
+cv.result <- randomForest::rfcv(exp.mat,labels)
+plot(cv.result$n.var, cv.result$error.cv, log="x", type="o", lwd=2)
+```
+- Take most important features
+- Random forest is random, do not want it to give the same result if you run the second time
+- If you want the result to reproducible, add `set.seed(...)`
+```{R}
+set.seed(666)
+rf.model <- randomForest::randomForest(exp.mat,labels)
+feature.importance <- randomForest::importance(rf.model)
+feature.names <- rownames(feature.importance)
+top.50.idx <- order(feature.importance,decreasing = T)[1:50]
+top.50.important <- feature.importance[top.50.idx]
+names(top.50.important) <- feature.names[top.50.idx]
+head(top.50.important)
+```
+
+
+- We can do similar things with SVM, gradient boosting, logistic regression, and many other models, just like random forest. But personally thinking, differential expression is enough ...

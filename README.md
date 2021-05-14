@@ -1,9 +1,21 @@
 # ez-prediction
-- Sometimes it is favorable to use clinical information like age, gender, clinical index, or high through put experiment data to predict disease outcome, or perform so-called moleculer diagnosis. 
-- Traditional machine learning methods work well for these proposes. This repo contains scripts for clinical prediction, all implemented in `R`.
-- Before you perform such machine learning, you'd better visualization your data with PCA, MDS, or hierarchical clustering, colored with sample labels. 
+- Sometimes it is desirable to use clinical information like age, gender, clinical index, or high through put experiment data to predict disease outcome, or perform so-called molecular diagnosis. 
+
+- Traditional machine learning methods work well for these proposes. This repo contains scripts for clinical prediction, all implemented as `R` markdown.
+
+- Before you perform such machine learning, you'd better visualization your data with *PCA*, *MDS*, or *hierarchical clustering*, colored with sample labels. 
   - Under some cases, tumor samples and tumor adjacent normal samples for example, different samples could form highly distinct clusters, and supervised learning is expected to have very high accuracy, hence not even necessary. 
   - Supervised learning here may useful for identify mild difference, like tumor samples from patients with good prognosis and bad prognosis, or even more mild difference, like plasma samples from cancer patient and healthy donors.
+  - Sample data here is actually some **COAD** tumor and paired tumor adjacent normal tissue data from *TCGA*. As described bellow, they are quiet distinct, and **accuracy on test set should near 100%**. One would *never* perform such analysis in real practice, this data is only used to exemplify how to use some machine learning package in R.
+  
+- Several R packages is required:
+
+  - [edgeR](https://bioconductor.org/packages/release/bioc/html/edgeR.html): for data normalization, and identify differential genes
+  - [caret](https://topepo.github.io/caret/): for dataset splitting
+  - [pROC](https://cran.r-project.org/web/packages/pROC/index.html): for performance evaluation
+  - [glmnet](https://cran.r-project.org/web/packages/glmnet/index.html): for (regularized) logistic regression
+  - [e1071](https://cran.r-project.org/web/packages/e1071/index.html): for SVM
+  - [randomForest](https://cran.r-project.org/web/packages/randomForest/index.html): for random forest
 
 ## Prepare input data
 ### Preprocessing
@@ -11,7 +23,7 @@
 - See `notebooks/preprocessing.Rmd`
 - Normalization is required for RNA-seq data
 - For gene expression, better log transform the data
-- Scale each feature, make its numeric values close to 0, like mean of 0 and standard deviation of 1.  Required for SVM and Logistic regression, not required for random forest and gradient boosting.
+- Scale each feature, make its numeric values close to 0, like mean of 0 and standard deviation of 1.  Such scaling is **required for SVM and Logistic regression, not required for random forest and gradient boosting**. See discussion here <https://stackoverflow.com/questions/8961586/do-i-need-to-normalize-or-scale-data-for-randomforest-r-package>
 
 ## Dataset splitting
 
@@ -33,29 +45,28 @@
 - Logistic regression, SVM, random forest or gradient boosting?
   - All is OK. 
   - If you emphasis interpretability rather than performance, use logistic regression. 
-  - If you want your model to tolerate dirty data, and expect good performance, use tree-based method (random forest and gradient boosting).
+  - If you want your model to tolerate dirty data (minimal preprocessing), and expect good performance, use tree-based method (random forest or gradient boosting).
   - SVM is also a good choice under most situation.
 
 #### Parameter tuning
 
 - `notebooks/tune.Rmd`
-- Default parameter actually works quite well under most situation.
+- Default parameters usually works quite well under most situation.
 - If you want to tune parameters
-  - Five fold cross validation, or leave-one-out cross validation if sample size is very small.
-  - Choose best hyper-parameter with respect to  average AUROC cross different cross validation runs.
+  - K fold cross validation, or leave-one-out cross validation if sample size is very small.
 
 #### Performance evaluation
 - `notebooks/performance.Rmd`
 - For each sample, in binary cases, the model gives P(y_i=1|X_i,Model)
 - We shall calculate the following metrics from known labels y_i (binary value in 0,1) and predicted probability P(y_i=1|X_i,Model) 
-  - FPR
-  - Sensitivity / Recall / TPR
-  - Precision / Specificity /PPV
-  - ROC curve and AUROC
-  - PRC curve and AUPRC
-- To calculate FPR, recall and precision, we should specify a predefined cutoff. For different cutoff, we can have different FPR, recall and precision. That is to say, every (FPR,TPR) pair is a point on ROC , every  (Precision,Recall) pair is a point on PRC 
-- For whole validation set, traverse all possible cutoff, we have a single ROC curve and single PRC curve, hence a single AUROC value and a single AUPRC value.
-- For clinical application, seems AUROC  is reported in most publications, sensitivity  and specificity some times is also reported. As there is different (sensitivity,specificity) pair, we often take point closest to up-left corner, or point where a line with slope 1 tangent to ROC curve. The confidence interval can also be reported.
+  - `FPR`
+  - `Sensitivity` / `Recall` / `TPR`
+  - `Precision` / `Specificity` /`PPV`
+  - ROC curve and `AUROC`
+  - PRC curve and `AUPRC`
+- To calculate `FPR`, recall and precision, we should specify a predefined cutoff. For different cutoff, we can have different `FPR`, recall and precision. That is to say, every (`FPR`,`TPR`) pair is a point on ROC , every  (`Precision`,`Recall`) pair is a point on PRC 
+- For whole validation set, traverse all possible cutoff, we have a single ROC curve and single PRC curve, hence a single `AUROC` value and a single `AUPRC` value.
+- For clinical application, seems `AUROC`  is reported in most publications, sensitivity  and specificity some times is also reported. As there is different (sensitivity,specificity) pair, we often take point closest to up-left corner (`closest.topleft` in pROC), or point where maximize (sensitivity+specificity, or `youden` in `pROC`). The confidence interval can also be reported.
 
 
 
