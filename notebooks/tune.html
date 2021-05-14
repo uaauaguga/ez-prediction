@@ -388,7 +388,7 @@ knitr::opts_knit$set(root.dir = your.wd)</code></pre>
 exp.mat &lt;- read.table(&quot;output/processed/log.cpm.scaled.txt&quot;, header = T, sep =&quot;\t&quot;,row.names=1,stringsAsFactors = F,check.names = F)
 exp.mat &lt;- as.matrix(exp.mat)
 train.ids &lt;- rownames(sample.info)[sample.info$dataset==&quot;train&quot;]
-selected.features &lt;- read.table(&quot;output/features/de.train.top50.txt&quot;, header = T, sep =&quot;\t&quot;,row.names=1,stringsAsFactors = F,check.names = F)
+selected.features &lt;- read.table(&quot;output/features/de.train.txt&quot;, header = T, sep =&quot;\t&quot;,row.names=1,stringsAsFactors = F,check.names = F)
 feature.ids &lt;- rownames(selected.features)[1:50]
 exp.mat &lt;- exp.mat[feature.ids,train.ids]
 exp.mat &lt;- t(as.matrix(exp.mat))

@@ -18,9 +18,11 @@ exp.mat <- read.table("output/processed/log.cpm.scaled.txt", header = T, sep ="\
 exp.mat <- as.matrix(exp.mat)
 train.ids <- rownames(sample.info)[sample.info$dataset=="train"]
 test.ids <- rownames(sample.info)[sample.info$dataset=="test"]
-selected.features <- read.table("output/features/de.train.top50.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+selected.features <- read.table("output/features/de.train.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
 
-feature.ids <- rownames(selected.features)[1:50]
+feature.ids <- rownames(selected.features)
+n.features <- length(feature.ids)
+feature.ids <- feature.ids[1:50]
 ```
 
 ```{R}
@@ -43,9 +45,9 @@ library(pROC)
 ```
 
 - As we expected, the model performance is perfect, as tumor and tumor adjancent tissue are highly distinct
+- May serve as positive control when you want to do some sanity check on other methods, as this dataset should always give perfect results
 ```{R}
 model.fitted <- glmnet(train.exp.mat,train.labels,family="binomial",lambda = 0.00488671)
-#model.fitted <- glmnet(train.exp.mat,train.labels,family="binomial",lambda = 0.4)
 pred.proba <- predict(model.fitted,newx=test.exp.mat, type="response")
 roc.curve <- roc(test.labels,as.numeric(pred.proba))
 ci.auc(roc.curve,x="best",conf.level = 0.95)

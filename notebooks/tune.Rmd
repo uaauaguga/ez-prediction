@@ -23,7 +23,7 @@ sample.info <- read.table("metadata/dataset.split.txt", header = T, sep ="\t",ro
 exp.mat <- read.table("output/processed/log.cpm.scaled.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
 exp.mat <- as.matrix(exp.mat)
 train.ids <- rownames(sample.info)[sample.info$dataset=="train"]
-selected.features <- read.table("output/features/de.train.top50.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+selected.features <- read.table("output/features/de.train.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
 feature.ids <- rownames(selected.features)[1:50]
 exp.mat <- exp.mat[feature.ids,train.ids]
 exp.mat <- t(as.matrix(exp.mat))

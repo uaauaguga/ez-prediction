@@ -38,5 +38,5 @@ y <- estimateDisp(y, design)
 fit.ql <- glmQLFit(y, design)
 tumor.vs.normal.ql <- glmQLFTest(fit.ql, coef=2)
 tumor.vs.normal.de.top50 <- topTags(tumor.vs.normal.ql,n=Inf)
-write.table(tumor.vs.normal.de.top50,"output/features/de.train.top50.txt",sep="\t",quote=FALSE)
+write.table(tumor.vs.normal.de.top50,"output/features/de.train.txt",sep="\t",quote=FALSE)
 ```

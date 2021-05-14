@@ -382,9 +382,11 @@ exp.mat &lt;- read.table(&quot;output/processed/log.cpm.scaled.txt&quot;, header
 exp.mat &lt;- as.matrix(exp.mat)
 train.ids &lt;- rownames(sample.info)[sample.info$dataset==&quot;train&quot;]
 test.ids &lt;- rownames(sample.info)[sample.info$dataset==&quot;test&quot;]
-selected.features &lt;- read.table(&quot;output/features/de.train.top50.txt&quot;, header = T, sep =&quot;\t&quot;,row.names=1,stringsAsFactors = F,check.names = F)
+selected.features &lt;- read.table(&quot;output/features/de.train.txt&quot;, header = T, sep =&quot;\t&quot;,row.names=1,stringsAsFactors = F,check.names = F)
 
-feature.ids &lt;- rownames(selected.features)[1:50]</code></pre>
+feature.ids &lt;- rownames(selected.features)
+n.features &lt;- length(feature.ids)
+feature.ids &lt;- feature.ids[1:50]</code></pre>
 <pre class="r"><code>train.exp.mat &lt;- as.matrix(t(exp.mat[feature.ids,train.ids]))
 test.exp.mat &lt;- as.matrix(t(exp.mat[feature.ids,test.ids]))
 
@@ -407,9 +409,9 @@ train.labels &lt;- as.integer(train.labels) - 1</code></pre>
 ##     cov, smooth, var</code></pre>
 <ul>
 <li>As we expected, the model performance is perfect, as tumor and tumor adjancent tissue are highly distinct</li>
+<li>May serve as positive control when you want to do some sanity check on other methods, as this dataset should always give perfect results</li>
 </ul>
 <pre class="r"><code>model.fitted &lt;- glmnet(train.exp.mat,train.labels,family=&quot;binomial&quot;,lambda = 0.00488671)
-#model.fitted &lt;- glmnet(train.exp.mat,train.labels,family=&quot;binomial&quot;,lambda = 0.4)
 pred.proba &lt;- predict(model.fitted,newx=test.exp.mat, type=&quot;response&quot;)
 roc.curve &lt;- roc(test.labels,as.numeric(pred.proba))</code></pre>
 <pre><code>## Setting levels: control = 0, case = 1</code></pre>
