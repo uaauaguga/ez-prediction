@@ -1,7 +1,7 @@
 # ez-prediction
 - Sometimes it is favorable to use clinical information like age, gender, clinical index, or high through put experiment data to predict disease outcome, or perform so-called moleculer diagnosis. 
 - Traditional machine learning methods work well for these proposes. This repo contains scripts for clinical prediction, all implemented in `R`.
-- Before you perform such machine learning, you'd better visualization your data with PCA, or hierarchical clustering, colored with sample labels. 
+- Before you perform such machine learning, you'd better visualization your data with PCA, MDS, or hierarchical clustering, colored with sample labels. 
   - Under some cases, tumor samples and tumor adjacent normal samples for example, different samples could form highly distinct clusters, and supervised learning is expected to have very high accuracy, hence not even necessary. 
   - Supervised learning here may useful for identify mild difference, like tumor samples from patients with good prognosis and bad prognosis, or even more mild difference, like plasma samples from cancer patient and healthy donors.
 

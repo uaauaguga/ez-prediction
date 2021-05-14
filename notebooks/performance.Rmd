@@ -1,0 +1,53 @@
+---
+title: "performance"
+author: "Jin"
+date: "2021年5月14日"
+output: html_document
+---
+
+- Set working directory
+```{r setup}
+your.wd <- "/home/jinyunfan/Documents/bioinfo/exRNA/ez-prediction"
+knitr::opts_knit$set(root.dir = your.wd)
+```
+
+- Load data
+```{R}
+sample.info <- read.table("metadata/dataset.split.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+exp.mat <- read.table("output/processed/log.cpm.scaled.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+exp.mat <- as.matrix(exp.mat)
+train.ids <- rownames(sample.info)[sample.info$dataset=="train"]
+test.ids <- rownames(sample.info)[sample.info$dataset=="test"]
+selected.features <- read.table("output/features/de.train.top50.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+
+feature.ids <- rownames(selected.features)[1:50]
+```
+
+```{R}
+train.exp.mat <- as.matrix(t(exp.mat[feature.ids,train.ids]))
+test.exp.mat <- as.matrix(t(exp.mat[feature.ids,test.ids]))
+
+test.labels <- sample.info[test.ids,"tissue.types"]
+test.labels <- factor(test.labels,level=c("normal","tumor"))
+test.labels <- as.integer(test.labels) - 1
+
+train.labels <- sample.info[train.ids,"tissue.types"]
+train.labels <- factor(train.labels,level=c("normal","tumor"))
+train.labels <- as.integer(train.labels) - 1
+```
+
+
+```{R}
+library(glmnet)
+library(pROC)
+```
+
+- As we expected, the model performance is perfect, as tumor and tumor adjancent tissue are highly distinct
+```{R}
+model.fitted <- glmnet(train.exp.mat,train.labels,family="binomial",lambda = 0.00488671)
+#model.fitted <- glmnet(train.exp.mat,train.labels,family="binomial",lambda = 0.4)
+pred.proba <- predict(model.fitted,newx=test.exp.mat, type="response")
+roc.curve <- roc(test.labels,as.numeric(pred.proba))
+ci.auc(roc.curve,x="best",conf.level = 0.95)
+plot(1-roc.curve$specificities,roc.curve$sensitivities)
+```

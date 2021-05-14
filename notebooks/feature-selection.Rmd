@@ -1,0 +1,42 @@
+---
+title: "feature-selection"
+author: "Jin"
+date: "2021年5月14日"
+output: html_document
+---
+
+- Set working directory
+```{r setup}
+your.wd <- "/home/jinyunfan/Documents/bioinfo/exRNA/ez-prediction"
+knitr::opts_knit$set(root.dir = your.wd)
+```
+
+- Select relevant features (significantly differentially expressed genes from training set)
+
+- Load training data
+```{R}
+sample.info <- read.table("metadata/dataset.split.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+count.path <- "data/TCGA-CRC-counts.txt"
+count.matrix <- read.table(count.path, header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+count.matrix <- as.matrix(count.matrix)
+train.ids <- rownames(sample.info)[sample.info$dataset=="train"]
+count.matrix <- count.matrix[,train.ids]
+labels <- sample.info[train.ids,"tissue.types"]
+labels <- factor(labels,level=c("normal","tumor"))
+```
+
+- Perform differential expression
+```{R}
+library(edgeR)
+y <- edgeR::DGEList(counts=count.matrix)
+keep <- edgeR::filterByExpr(y,group = labels)
+y <- y[keep, , keep.lib.sizes=FALSE]
+y <- edgeR::calcNormFactors(y,method="TMM")
+
+design <- model.matrix(~labels)
+y <- estimateDisp(y, design)
+fit.ql <- glmQLFit(y, design)
+tumor.vs.normal.ql <- glmQLFTest(fit.ql, coef=2)
+tumor.vs.normal.de.top50 <- topTags(tumor.vs.normal.ql,n=Inf)
+write.table(tumor.vs.normal.de.top50,"output/features/de.train.top50.txt",sep="\t",quote=FALSE)
+```

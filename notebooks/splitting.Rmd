@@ -1,0 +1,34 @@
+---
+title: "splitting"
+author: "Jin"
+date: "2021年5月14日"
+output: html_document
+---
+
+- Set working directory
+```{r setup}
+your.wd <- "/home/jinyunfan/Documents/bioinfo/exRNA/ez-prediction"
+knitr::opts_knit$set(root.dir = your.wd)
+```
+
+- Perform dataset splitting
+  - Use [caret](https://topepo.github.io/caret/) package
+  - see <https://topepo.github.io/caret/data-splitting.html> for detail
+```{R}
+library(caret)
+sample.info <- read.table("metadata/sample.info.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+set.seed(3456)
+training.idx <- createDataPartition(sample.info$tissue.types,times = 1,p = 0.5)$Resample1
+sample.info[["dataset"]] <- "test"
+sample.info[["dataset"]][training.idx] <- "train"
+```
+
+- Display result of dataset splitting
+```{R}
+table(sample.info)
+```
+
+- Save results
+```{R}
+write.table(sample.info,"metadata/dataset.split.txt",sep="\t",quote=FALSE)
+```

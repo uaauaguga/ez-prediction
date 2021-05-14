@@ -1,0 +1,67 @@
+---
+title: "preprocessing"
+author: "Jin"
+date: "2021年5月14日"
+output: html_document
+---
+
+## Preprocessing for machine learning
+
+- Set working directory
+```{r setup}
+your.wd <- "/home/jinyunfan/Documents/bioinfo/exRNA/ez-prediction"
+knitr::opts_knit$set(root.dir = your.wd)
+```
+- Input data file
+  - `data/TCGA-CRC-counts.txt`
+  - RNA-seq data from some CRC tumor samples (ends with 01A)
+  - paired tumor adjacent normal samples (ends with 11A)
+- Load count matrix
+
+```{R}
+count.path <- "data/TCGA-CRC-counts.txt"
+count.matrix <- read.table(count.path, header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+count.matrix <- as.matrix(count.matrix)
+sample.ids <- colnames(count.matrix)
+tissue.types <- rep("normal",length(sample.ids))
+tissue.types[grep("01A$",sample.ids)] <- "tumor"
+sample.info <- cbind(sample.ids,tissue.types)
+tissue.types <- factor(tissue.types,level=c("tumor","normal"))
+```
+
+- Save metadata
+```{R}
+write.table(sample.info,"metadata/sample.info.txt",sep="\t",quote=FALSE,row.names = F)
+```
+
+- Filtering and perform TMM normalization with edge R
+```{R}
+library(edgeR)
+y <- edgeR::DGEList(counts=count.matrix)
+keep <- edgeR::filterByExpr(y,group = tissue.types)
+y <- y[keep, , keep.lib.sizes=FALSE]
+y <- edgeR::calcNormFactors(y,method="TMM")
+log.cpm <- cpm(y,log = TRUE)
+```
+
+- Visualize with MDS-plot
+```{R}
+plotMDS(log.cpm,labels=tissue.types)
+```
+- As shown in MDS plot, Practically we already expect high classification accuracy, but we keep go on as an example
+
+- Save log CPM
+```{R}
+write.table(round(log.cpm,3),"output/processed/log.cpm.txt",sep="\t",quote=FALSE)
+```
+
+- Scaling log CPM
+
+```{R}
+log.cpm <- as.matrix(t(log.cpm)) # columns for genes, row for samples
+log.cpm.scaled <- scale(log.cpm)
+#col.std <- apply(log.cpm, 2, sd) # check standard deviation of each gene, should equals to 1
+#col.mean <- apply(log.cpm, 2, mean) # check mean log cpm of each gene, should very close to 0
+write.table(round(t(log.cpm.scaled),3),"output/processed/log.cpm.scaled.txt",sep="\t",quote=FALSE)
+```
+
