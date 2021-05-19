@@ -23,7 +23,7 @@
 - See `notebooks/preprocessing.Rmd`
 - Normalization is required for RNA-seq data
 - For gene expression, better log transform the data
-- Scale each feature, make its numeric values close to 0, like mean of 0 and standard deviation of 1.  Such scaling is **required for SVM and Logistic regression, not required for random forest and gradient boosting**. See discussion here <https://stackoverflow.com/questions/8961586/do-i-need-to-normalize-or-scale-data-for-randomforest-r-package>
+- Scale each feature, make its numeric values close to 0, like mean of 0 and standard deviation of 1.  Such scaling is **required for SVM and Logistic regression, not required for random forest and gradient boosting tree**. See discussion here <https://stackoverflow.com/questions/8961586/do-i-need-to-normalize-or-scale-data-for-randomforest-r-package>
 
 ## Dataset splitting
 
