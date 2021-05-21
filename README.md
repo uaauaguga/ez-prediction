@@ -3,10 +3,10 @@
 
 - Traditional machine learning methods work well for these proposes. This repo contains scripts for clinical prediction, all implemented as `R` markdown.
 
-- Before you perform such machine learning, you'd better visualization your data with *PCA*, *MDS*, or *hierarchical clustering*, colored with sample labels. 
+- Before you perform such machine learning, you'd better visualization your data with **PCA**, **MDS**, or **hierarchical clustering**, colored with sample labels. 
   - Under some cases, tumor samples and tumor adjacent normal samples for example, different samples could form highly distinct clusters, and supervised learning is expected to have very high accuracy, hence not even necessary. 
   - Supervised learning here may useful for identify mild difference, like tumor samples from patients with good prognosis and bad prognosis, or even more mild difference, like plasma samples from cancer patient and healthy donors.
-  - Sample data here is actually some **COAD** tumor and paired tumor adjacent normal tissue data from *TCGA*. As described bellow, they are quiet distinct, and **accuracy on test set should near 100%**. One would *never* perform such analysis in real practice, this data is only used to exemplify how to use some machine learning package in R.
+  - Sample data here is actually some **COAD** tumor and paired tumor adjacent normal tissue data from **TCGA**. As described bellow, they are quiet distinct, and **accuracy on test set should near 100%**. One would **never** perform such analysis in real practice, this data is only used to exemplify how to use some machine learning package in R.
   
 - Several R packages is required:
 
@@ -42,10 +42,13 @@
   - If you want to perform feature selection, make sure only use data in training set. Also, if you use whole training set for feature selection, then use these features for classification, the resulting cross validation performance will be over estimated, and only performance on testing set makes sense.
 
 ### Model fitting
+- Note that R packages distinguish regression tasks and classification tasks data type of the response variable. This is different from sklearn, which provide seperated API for classification and regression tasks.
+- If your response is factor in `R`, it will perform  regression, or if your response is a numeric vector, it will perform regression
+- So for classification, make sure your input response variable is a vector of R factors
 - Logistic regression, SVM, random forest or gradient boosting?
   - All is OK. 
   - If you emphasis interpretability rather than performance, use logistic regression. 
-  - If you want your model to tolerate dirty data (minimal preprocessing), and expect good performance, use tree-based method (random forest or gradient boosting).
+  - If you want your model to tolerate dirty data (minimal preprocessing), run fast, and expect good performance, use tree-based method (random forest or gradient boosting).
   - SVM is also a good choice under most situation.
 
 #### Parameter tuning
