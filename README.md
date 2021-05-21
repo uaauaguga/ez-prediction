@@ -42,8 +42,8 @@
   - If you want to perform feature selection, make sure only use data in training set. Also, if you use whole training set for feature selection, then use these features for classification, the resulting cross validation performance will be over estimated, and only performance on testing set makes sense.
 
 ### Model fitting
-- Note that R packages distinguish regression tasks and classification tasks data type of the response variable. This is different from sklearn, which provide seperated API for classification and regression tasks.
-- If your response is factor in `R`, it will perform  regression, or if your response is a numeric vector, it will perform regression
+- Note that R packages typically distinguish regression tasks and classification tasks by data type of the response variable. This is different from [sklearn](https://scikit-learn.org/), which provide seperated API for classification and regression.
+- If your response is factor in `R`, it will perform  regression, or if your response is a numeric vector, it will perform regression.
 - So for classification, make sure your input response variable is a vector of R factors
 - Logistic regression, SVM, random forest or gradient boosting?
   - All is OK. 
