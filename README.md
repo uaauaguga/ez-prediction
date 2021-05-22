@@ -44,7 +44,7 @@
 ### Model fitting
 - Note that R packages typically distinguish regression tasks and classification tasks by data type of the response variable. This is different from [sklearn](https://scikit-learn.org/), which provide seperated API for classification and regression.
 - If your response is factor in `R`, it will perform  regression, or if your response is a numeric vector, it will perform regression.
-- So for classification, make sure your input response variable is a vector of R factors
+- So **for classification, make sure your input response variable is a vector of R factors**
 - Logistic regression, SVM, random forest or gradient boosting?
   - All is OK. 
   - If you emphasis interpretability rather than performance, use logistic regression. 
@@ -61,15 +61,17 @@
 #### Performance evaluation
 - `notebooks/performance.Rmd`
 - For each sample, in binary cases, the model gives P(y_i=1|X_i,Model)
+- See <https://en.wikipedia.org/wiki/Confusion_matrix> and <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>
+- Also see <https://people.inf.elte.hu/kiss/11dwhdm/roc.pdf>
+- Some alias
+  - sensitivity, recall, TPR
+  - FPR, 1 - specificity
+  - precision, PPV
 - We shall calculate the following metrics from known labels y_i (binary value in 0,1) and predicted probability P(y_i=1|X_i,Model) 
-  - `FPR`
-  - `Sensitivity` / `Recall` / `TPR`
-  - `Precision` / `Specificity` /`PPV`
-  - ROC curve and `AUROC`
-  - PRC curve and `AUPRC`
-- To calculate `FPR`, recall and precision, we should specify a predefined cutoff. For different cutoff, we can have different `FPR`, recall and precision. That is to say, every (`FPR`,`TPR`) pair is a point on ROC , every  (`Precision`,`Recall`) pair is a point on PRC 
+- To calculate recall and precision, we should specify a predefined cutoff. For different cutoff, we can have different `FPR`, recall and precision. That is to say, every (`FPR`,`TPR`) pair, or (1-specificity,sensitivity) is a point on ROC (Receiver operating characteristic) curve, every  (`recall`,`precision`) pair is a point on precision recall curve (PRC)
 - For whole validation set, traverse all possible cutoff, we have a single ROC curve and single PRC curve, hence a single `AUROC` value and a single `AUPRC` value.
-- For clinical application, seems `AUROC`  is reported in most publications, sensitivity  and specificity some times is also reported. As there is different (sensitivity,specificity) pair, we often take point closest to up-left corner (`closest.topleft` in pROC), or point where maximize (sensitivity+specificity, or `youden` in `pROC`). The confidence interval can also be reported.
+- For clinical application, seems `AUROC`  is reported in most publications, sensitivity  and specificity some times is also reported. The confidence interval can also be reported. As there is different (1 - specificity, sensitivity) pair, we often take point closest to up-left corner (`closest.topleft` in pROC), or point where maximize sensitivity+specificity, (`youden` in `pROC`). 
+
 
 
 
