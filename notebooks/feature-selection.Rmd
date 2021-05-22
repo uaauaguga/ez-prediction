@@ -43,7 +43,9 @@ write.table(tumor.vs.normal.de.top50,"output/features/de.train.txt",sep="\t",quo
 
 - Instead of differential expression, you can use random forest or other model to perform feature selection
 
+
 - Use `rfcv` in `randomForest` package to show how perform change as number of features descrease
+- We genrally use cross validation for parameter tuning, but in `randomForest` package, the `rfcv` function is used to determine the relationship between number of features and model performance ...  
 ```{R}
 library(randomForest)
 exp.mat <- read.table("output/processed/log.cpm.scaled.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
@@ -51,9 +53,11 @@ exp.mat <- t(as.matrix(exp.mat)[,train.ids])
 cv.result <- randomForest::rfcv(exp.mat,labels)
 plot(cv.result$n.var, cv.result$error.cv, log="x", type="o", lwd=2)
 ```
-- Take most important features
-- Random forest is random, do not want it to give the same result if you run the second time
-- If you want the result to reproducible, add `set.seed(...)`
+
+- Take 50 most important features (although seems 10 feature is enough)
+- Random forest is random, do not expect it to give the same result if you run the second time
+- If you want the result to be reproducible, add `set.seed(...)`
+
 ```{R}
 set.seed(666)
 rf.model <- randomForest::randomForest(exp.mat,labels)

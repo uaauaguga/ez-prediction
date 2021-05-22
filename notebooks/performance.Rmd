@@ -25,17 +25,18 @@ n.features <- length(feature.ids)
 feature.ids <- feature.ids[1:50]
 ```
 
+
 ```{R}
 train.exp.mat <- as.matrix(t(exp.mat[feature.ids,train.ids]))
 test.exp.mat <- as.matrix(t(exp.mat[feature.ids,test.ids]))
+
+# If you set stringsAsFactors = F in read.table function, the response variable in `sample.info` is not of factor type
 
 train.labels <- sample.info[train.ids,"tissue.types"]
 train.labels <- factor(train.labels,level=c("normal","tumor"))
 
 test.labels <- sample.info[test.ids,"tissue.types"]
 test.labels <- factor(test.labels,level=c("normal","tumor"))
-
-
 ```
 
 
@@ -50,18 +51,20 @@ library(pROC)
 
 ## Logistic regression
 - Logistic regression for cross validation and performance evaluation
+- Cross validation: tune the regularize factor lambda 
 - `glmnet`
 ```{R}
 # Cross validation
 cv.lr.result <- cv.glmnet(train.exp.mat,train.labels,family="binomial",nfolds = length(train.labels))
 cv.lr.result$lambda.min
 # Plot relation between loss and hyper-parameter lambda 
-plot(cv.lr.result$lambda,cv.lr.result$cvm)
+#plot(cv.lr.result$lambda,cv.lr.result$cvm)
 pred.proba <- predict.glmnet(cv.lr.result$glmnet.fit,newx=test.exp.mat, type="response", s =cv.lr.result$lambda.min)
 ```
 - Evaluate performance
   - Calculate AUROC with `ci.auc`
   - Calculate best `recall` and `precision` with `ci.coords`
+  
 ```{R}
 roc.curve <- roc(test.labels,as.numeric(pred.proba))
 ci.auc(roc.curve,x="best",conf.level = 0.95)
@@ -77,14 +80,14 @@ ci.coords(roc.curve,x="best",conf.level = 0.95,ret = c("recall","precision"),bes
 ## SVM
 - SVM, use package `e1071`
 - Default parameters usually works well
+- If perform cross validation, tune hyper-parameter `gamma` and `cost`
 ```{R}
 library(e1071)
-# Perform cross validation
-# search space is gamma = 2^(-1:1)/50
-# cost = 2^(-1:1)
-# by default gamma parameter needed for all kernels except linear (default: 1/(data dimension))
-# cost	cost of constraints violation (default: 1)—it is the ‘C’-constant of the regularization term in the Lagrange formulation.
-cv.svm.results <- tune.svm(train.exp.mat,train.labels,gamma = 2^(-1:1)/50, cost = 2^(-1:1),probability = TRUE)
+# search space of gamma: 2^(-1:1)/50, 1/(data dimension) by default 
+# search space of cost: 2^(-1:1), 1 by default
+gamma <- 2^(-2:2)/50
+cost <- 2^(-2:2)
+cv.svm.results <- tune.svm(train.exp.mat,train.labels,gamma = gamma, cost = cost ,probability = TRUE)
 cv.svm.results$best.parameters
 # Perform prediction using best model
 pred.proba <- predict(cv.svm.results$best.model,newdata=test.exp.mat,probability = TRUE)
