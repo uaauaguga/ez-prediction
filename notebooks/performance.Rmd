@@ -28,7 +28,7 @@ selected.features <- read.table("output/features/de.train.txt", header = T, sep 
 feature.ids <- rownames(selected.features)
 n.features <- length(feature.ids)
 feature.ids <-  tail(feature.ids,30) #take most insignificant features 
-# If you want to use significant ones, simply replace tail(feature.ids,20) with head(feature.ids,30) 
+# If you want to use significant ones, simply replace tail(feature.ids,30) with head(feature.ids,30) 
 ```
 
 
@@ -115,6 +115,7 @@ ci.coords(roc.curve,x="best",conf.level = 0.95,ret = c("recall","precision"),bes
 ### Cross validation without parameter tuning
 - Sometimes your may want to perform cross validation, only for performance evaluation, instead of parameter tuning
 - For example, shuffle split cross validation like in sklearn's [StratifiedShuffleSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedShuffleSplit.html)
+- Number of cross validation is controled by `times`
 
 ```{R}
 library(caret)
