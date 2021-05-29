@@ -55,7 +55,7 @@ library(pROC)
 - `glmnet`
 ```{R}
 # Cross validation
-cv.lr.result <- cv.glmnet(train.exp.mat,train.labels,family="binomial",nfolds = length(train.labels))
+cv.lr.result <- cv.glmnet(train.exp.mat,train.labels,family="binomial")
 cv.lr.result$lambda.min
 # Plot relation between loss and hyper-parameter lambda 
 #plot(cv.lr.result$lambda,cv.lr.result$cvm)
@@ -67,7 +67,7 @@ pred.proba <- predict(cv.lr.result$glmnet.fit,newx=test.exp.mat,type="response",
   
 ```{R}
 roc.curve <- roc(test.labels,as.numeric(pred.proba))
-ci.auc(roc.curve,x="best",conf.level = 0.95)
+ci.auc(roc.curve,conf.level = 0.95)
 plot(1-roc.curve$specificities,roc.curve$sensitivities,type="l")
 # best.method=c("youden", "closest.topleft")
 # youden by default. 
@@ -94,7 +94,7 @@ pred.proba <- predict(cv.svm.results$best.model,newdata=test.exp.mat,probability
 pred.proba <- attr(pred.proba,"probabilities")[,"tumor"]
 # Evaluate performance
 roc.curve <- roc(test.labels,as.numeric(pred.proba))
-ci.auc(roc.curve,x="best",conf.level = 0.95)
+ci.auc(roc.curve,conf.level = 0.95)
 plot(1-roc.curve$specificities,roc.curve$sensitivities,type="l")
 ci.coords(roc.curve,x="best",conf.level = 0.95,ret = c("recall","precision"),best.policy="random")
 ```
@@ -107,7 +107,7 @@ rf.model.fitted <- randomForest(train.exp.mat,train.labels)
 pred.proba <- predict(rf.model.fitted,newdata=test.exp.mat,type="prob")
 pred.proba <- pred.proba[,"tumor"]
 roc.curve <- roc(test.labels,as.numeric(pred.proba))
-ci.auc(roc.curve,x="best",conf.level = 0.95)
+ci.auc(roc.curve,conf.level = 0.95)
 plot(1-roc.curve$specificities,roc.curve$sensitivities,type="l")
 ci.coords(roc.curve,x="best",conf.level = 0.95,ret = c("recall","precision"),best.policy="random")
 ```
