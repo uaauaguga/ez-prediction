@@ -17,6 +17,12 @@
   - [e1071](https://cran.r-project.org/web/packages/e1071/index.html): for SVM
   - [randomForest](https://cran.r-project.org/web/packages/randomForest/index.html): for random forest
 
+- Some R package you may interest in:
+  - More packages for feature selection
+    - [FSinR](https://cran.r-project.org/web/packages/FSinR/index.html)
+    - This repo <https://github.com/FrancisArgnR/R-FeatureSelection-Packages> lists many packages for feature selection.
+ 
+
 ## Prepare input data
 ### Preprocessing
 
