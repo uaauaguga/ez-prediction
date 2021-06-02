@@ -11,7 +11,7 @@
 - Several R packages is required:
 
   - [edgeR](https://bioconductor.org/packages/release/bioc/html/edgeR.html): for data normalization, and identify differential genes
-  - [caret](https://topepo.github.io/caret/): for dataset splitting
+  - [caret](https://topepo.github.io/caret/): for dataset splitting and feature selection
   - [pROC](https://cran.r-project.org/web/packages/pROC/index.html): for performance evaluation
   - [glmnet](https://cran.r-project.org/web/packages/glmnet/index.html): for (regularized) logistic regression
   - [e1071](https://cran.r-project.org/web/packages/e1071/index.html): for SVM
@@ -33,6 +33,7 @@
 ## Model training 
 
 ### Feature selection
+- Search for a feature subset of given size, that has good predictive capacity.
 - See `notebooks/feature-selection.Rmd`
 - Whether feature selection is necessary, and how to perform it?
   - See following discussions
@@ -40,6 +41,21 @@
     - <https://datascience.stackexchange.com/questions/16062/is-feature-selection-necessary>
   - Seems the consensus if sample size is large, feature selection is not necessary.
   - If you want to perform feature selection, make sure only use data in training set. Also, if you use whole training set for feature selection, then use these features for classification, the resulting cross validation performance will be over estimated, and only performance on testing set makes sense.
+
+- Feature selection methods
+  - Methods that optimize for single feature
+    - Calculate a measure of correlation (p value of some statistical testing, mutual information, AUROC, etc) between each feature and response variable
+    - Rank features by such measure, take top features
+  - Methods that optimize for multiple features
+    - Search for a feature subset that maximize the cross validation performance of a classifier on training data
+    - Could (in theory) consider interactions between different features.
+    - Impractical to enumerate all feature subset under most cases, have to rely on heuristics like recursive elimination, simulated annealing, etc
+  -  It's very simple to implement most univariate feature selection method using native R.
+  - [caret](https://topepo.github.io/caret/) package implement multiple feature selection method. See introduction here <https://topepo.github.io/caret/feature-selection-overview.html>.
+  - [FSinR](https://cran.r-project.org/web/packages/FSinR/vignettes/FSinR.html) also have multiple implementations.
+  - A measure of feature importance is availble for most classifier. You can simply use the most important ones.
+  
+
 
 ### Model fitting
 - Note that R packages typically distinguish regression tasks and classification tasks by data type of the response variable. This is different from [sklearn](https://scikit-learn.org/), which provide seperated API for classification and regression.
