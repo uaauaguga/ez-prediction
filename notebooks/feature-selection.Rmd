@@ -37,8 +37,8 @@ design <- model.matrix(~labels)
 y <- estimateDisp(y, design)
 fit.ql <- glmQLFit(y, design)
 tumor.vs.normal.ql <- glmQLFTest(fit.ql, coef=2)
-tumor.vs.normal.de.top50 <- topTags(tumor.vs.normal.ql,n=Inf)
-write.table(tumor.vs.normal.de.top50,"output/features/de.train.txt",sep="\t",quote=FALSE)
+tumor.vs.normal.de <- topTags(tumor.vs.normal.ql,n=Inf)
+write.table(tumor.vs.normal.de,"output/features/de.train.txt",sep="\t",quote=FALSE)
 ```
 
 - Instead of differential expression, you can use random forest or other model to perform feature selection
@@ -71,3 +71,53 @@ head(top.50.important)
 
 
 - We can do similar things with SVM, gradient boosting, logistic regression, and many other models, just like random forest. But personally thinking, differential expression is enough ...
+
+
+### relief base feature selection
+```{R}
+library(FSinR)
+evaluator <- filterEvaluator('ReliefFeatureSetMeasure')
+directSearcher <- directSearchAlgorithm('selectKBest', list(k=3))
+get.K.best <- selectKBest(k=6)
+## Only take 50 features as a demo input
+exp.data <- as.data.frame(exp.mat[,1:50])
+exp.data[["labels"]] <- labels
+results <- get.K.best(exp.data, "labels", evaluator)
+results$featuresSelected
+```
+
+
+- You can perform exhaustive search with cross-validation for feature selection
+- Some one thought this is likely  to lead to overfitting, see <https://stats.stackexchange.com/questions/38038/can-i-perform-an-exhaustive-search-with-cross-validation-for-feature-selection>
+- It will be a large difference if you change the random seed. But after all there is still some correlation...
+
+```{R}
+## Suppose we some how reduce the search tp 8 features, we want to 4 most important ones
+## features.started is 8 features we start from
+features.started <- tail(rownames(tumor.vs.normal.de$table),8)
+all.combinations <- combn(1:8, 4, simplify = FALSE)
+n.combinations <- length(all.combinations)
+exp.mat.started <- exp.mat[,features.started]
+
+cv.for.FS <- function(x,y){
+    set.seed(666)
+    rf.cv <- train(x,y,
+                 method = "rf",
+                 preProcess = NULL,
+                 ntree = 100,
+                 tuneLength = 1,
+                 trControl = trainControl(number = 5,method = "repeatedcv",repeats = 1,savePredictions = T,classProbs = T))
+   roc.curve <- roc(rf.cv$pred$obs,rf.cv$pred$tumor)
+  # See https://stats.stackexchange.com/questions/386326/appropriate-way-to-get-cross-validated-auc
+  return(as.numeric(roc.curve$auc))
+}
+
+cv.aurocs <- lapply(all.combinations,function(indices,x,y){cv.for.FS(x[,indices],y)},x=exp.mat.started,y=labels)
+
+# A parallel version, should be quicker
+# library(parallel)
+# cv.aurocs1 <- mclapply(all.combinations,function(indices,x,y){cv.for.FS(x[,indices],y)},x=exp.mat.started,y=labels,mc.cores=4) 
+
+features.selected <- features.started[all.combinations[[which.max(unlist(cv.aurocs))]]]
+
+```

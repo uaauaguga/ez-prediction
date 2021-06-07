@@ -134,5 +134,19 @@ for(i in seq(length(training.indices))){
 aurocs
 ```
 
+- Use caret build in function
 
+```{R}
+library(caret)
+# Control dataset splitting used in train function
+# Internally calls randomForest package
+rf.loo.fit <- train(exp.mat, sample.info$tissue.types,
+                 method = "rf",
+                 preProcess = NULL,
+                 ntree = 100,
+                 tuneLength = 1,
+                 trControl = trainControl(method = "LOOCV",savePredictions = T,classProbs = T))
+roc.curve <- roc(rf.loo.fit$pred$obs,rf.loo.fit$pred$tumor)
+auc(roc.curve)
+```
 
