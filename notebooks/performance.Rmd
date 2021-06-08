@@ -19,59 +19,70 @@ knitr::opts_knit$set(root.dir = your.wd)
 
 
 ```{R}
-sample.info <- read.table("metadata/dataset.split.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+sample.info <- read.table("metadata/dataset.split.txt", header = T, sep ="\t",row.names=1,check.names = F)
 exp.mat <- read.table("output/processed/log.cpm.scaled.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
 train.ids <- rownames(sample.info)[sample.info$dataset=="train"]
 test.ids <- rownames(sample.info)[sample.info$dataset=="test"]
-selected.features <- read.table("output/features/de.train.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
+features.de <- read.table("output/features/de.train.txt", header = T, sep ="\t",row.names=1,stringsAsFactors = F,check.names = F)
 
-feature.ids <- rownames(selected.features)
-n.features <- length(feature.ids)
-feature.ids <-  tail(feature.ids,30) #take most insignificant features 
-# If you want to use significant ones, simply replace tail(feature.ids,30) with head(feature.ids,30) 
-```
-
-
-```{R}
+feature.ids <- rownames(features.de)
+set.seed(666)
+feature.ids <-  c(sample(feature.ids,6,replace=F),tail(feature.ids,8))
+# You can use the most significant features
 exp.mat <- as.matrix(t(exp.mat[feature.ids,]))
 train.exp.mat <- exp.mat[train.ids,]
 test.exp.mat <- exp.mat[test.ids,]
 
 # If you set stringsAsFactors = F in read.table function, the response variable in `sample.info` is not of factor type
-sample.info$tissue.types = factor(sample.info$tissue.types,level=c("normal","tumor"))
 train.labels <- sample.info[train.ids,"tissue.types"]
 test.labels <- sample.info[test.ids,"tissue.types"]
 ```
 
 
+
 ```{R}
 library(glmnet)
+library(e1071)
+library(randomForest)
 library(pROC)
+library(caret)
+library(ggplot2)
 ```
 
 ## Logistic regression
 - Logistic regression for cross validation and performance evaluation
-- Cross validation: tune the regularize factor lambda 
+- Hyperparameter
+  - alpha: default is 1, the lasso penalty. If set to 0, corresponds to ridge regression. If between 0 and 1, corresponds to elastic net
+  - lambda: the stringency of regularization
 - `glmnet`
 ```{R}
-# Cross validation
-cv.lr.result <- cv.glmnet(train.exp.mat,train.labels,family="binomial")
-cv.lr.result$lambda.min
-# Plot relation between loss and hyper-parameter lambda 
-#plot(cv.lr.result$lambda,cv.lr.result$cvm)
-pred.proba <- predict(cv.lr.result$glmnet.fit,newx=test.exp.mat,type="response", s =cv.lr.result$lambda.min)
+tuneGrid = expand.grid(alpha = 0,lambda = seq(0,0.1,length=100))
+trControl = trainControl(method = "LOOCV",savePredictions = T,classProbs = T,summaryFunction = twoClassSummary)
+glmnet.cross.validation <- train(train.exp.mat,train.labels,
+                 method = "glmnet",
+                 family="binomial",
+                 metric = "ROC",
+                 tuneGrid = tuneGrid,
+                 preProcess = NULL,
+                 trControl = trControl)
+
+cv.performance <- glmnet.cross.validation$results[order(glmnet.cross.validation$results$ROC,decreasing = T),]
+cv.performance[order(cv.performance$ROC,decreasing = T)[1:10],]
 ```
+
 - Evaluate performance
   - Calculate AUROC with `ci.auc`
   - Calculate best `recall` and `precision` with `ci.coords`
   
 ```{R}
+glmnet.fit <- glmnet(train.exp.mat,train.labels,lambda = glmnet.cross.validation$bestTune$lambda,alpha = 1,family = "binomial")
+pred.proba <- predict(glmnet.fit,newx=test.exp.mat,type="response") # type="response" makes it return possibility
 roc.curve <- roc(test.labels,as.numeric(pred.proba))
 ci.auc(roc.curve,conf.level = 0.95)
 plot(1-roc.curve$specificities,roc.curve$sensitivities,type="l")
 # best.method=c("youden", "closest.topleft")
 # youden by default. 
-ci.coords(roc.curve,x="best",conf.level = 0.95,ret = c("recall","precision"),best.method="youden",best.policy="random")
+ci.coords(roc.curve,x="best",conf.level = 0.95,ret = c("recall","specificity","precision"),best.method="youden",best.policy="random")
 ```
 
 
@@ -81,8 +92,8 @@ ci.coords(roc.curve,x="best",conf.level = 0.95,ret = c("recall","precision"),bes
 - SVM, use package `e1071`
 - Default parameters usually works well
 - If perform cross validation, tune hyper-parameter `gamma` and `cost`
+
 ```{R}
-library(e1071)
 # search space of gamma: 2^(-1:1)/50, 1/(data dimension) by default 
 # search space of cost: 2^(-1:1), 1 by default
 gamma <- 2^(-2:2)/50
@@ -96,14 +107,34 @@ pred.proba <- attr(pred.proba,"probabilities")[,"tumor"]
 roc.curve <- roc(test.labels,as.numeric(pred.proba))
 ci.auc(roc.curve,conf.level = 0.95)
 plot(1-roc.curve$specificities,roc.curve$sensitivities,type="l")
-ci.coords(roc.curve,x="best",conf.level = 0.95,ret = c("recall","precision"),best.policy="random")
+ci.coords(roc.curve,x="best",conf.level = 0.95,ret = c("recall","specificity","precision"),best.policy="random")
 ```
 
 ## Random Forest
 - Use package `randomForest`
+- You don't need to tune number of trees, but may tune the `mtry` parameter
+
 ```{R}
-library(randomForest)
-rf.model.fitted <- randomForest(train.exp.mat,train.labels)
+trControl = trainControl(method = "LOOCV",savePredictions = T,classProbs = T,summaryFunction = twoClassSummary)
+rf.cross.validation <- train(train.exp.mat,train.labels,
+                 method = "rf",
+                 metric = "ROC",
+                 preProcess = NULL,
+                 trControl = trControl)
+
+cv.performance <- rf.cross.validation$results[order(rf.cross.validation$results$ROC,decreasing = T),]
+cv.performance[order(cv.performance$ROC,decreasing = T),]
+```
+
+- You can also use built in function `tuneRF` in `RandomForest` package, which use OOB error for parameter tuning
+
+```{R}
+tuneRF(train.exp.mat,train.labels)
+```
+
+
+```{R}
+rf.model.fitted <- randomForest(train.exp.mat,train.labels,mtry = rf.cross.validation$bestTune$mtry)
 pred.proba <- predict(rf.model.fitted,newdata=test.exp.mat,type="prob")
 pred.proba <- pred.proba[,"tumor"]
 roc.curve <- roc(test.labels,as.numeric(pred.proba))
@@ -112,15 +143,9 @@ plot(1-roc.curve$specificities,roc.curve$sensitivities,type="l")
 ci.coords(roc.curve,x="best",conf.level = 0.95,ret = c("recall","precision"),best.policy="random")
 ```
 
-### Cross validation without parameter tuning
-- Sometimes your may want to perform cross validation, only for performance evaluation, instead of parameter tuning
-- For example, shuffle split cross validation like in sklearn's [StratifiedShuffleSplit](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedShuffleSplit.html)
-- Number of cross validation is controled by `times`
+- You can also manually implement some cross validation 
 
 ```{R}
-library(caret)
-library(randomForest)
-library(pROC)
 training.indices <- createDataPartition(sample.info$tissue.types,times = 10,p = 0.8)
 aurocs <- c()
 for(i in seq(length(training.indices))){
@@ -133,20 +158,3 @@ for(i in seq(length(training.indices))){
 }
 aurocs
 ```
-
-- Use caret build in function
-
-```{R}
-library(caret)
-# Control dataset splitting used in train function
-# Internally calls randomForest package
-rf.loo.fit <- train(exp.mat, sample.info$tissue.types,
-                 method = "rf",
-                 preProcess = NULL,
-                 ntree = 100,
-                 tuneLength = 1,
-                 trControl = trainControl(method = "LOOCV",savePredictions = T,classProbs = T))
-roc.curve <- roc(rf.loo.fit$pred$obs,rf.loo.fit$pred$tumor)
-auc(roc.curve)
-```
-

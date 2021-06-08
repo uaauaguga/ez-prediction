@@ -54,7 +54,6 @@ cv.result <- randomForest::rfcv(exp.mat,labels)
 plot(cv.result$n.var, cv.result$error.cv, log="x", type="o", lwd=2)
 ```
 
-- Take 50 most important features (although seems 10 feature is enough)
 - Random forest is random, do not expect it to give the same result if you run the second time
 - If you want the result to be reproducible, add `set.seed(...)`
 
@@ -92,32 +91,33 @@ results$featuresSelected
 - It will be a large difference if you change the random seed. But after all there is still some correlation...
 
 ```{R}
-## Suppose we some how reduce the search tp 8 features, we want to 4 most important ones
+library(caret)
+library(pROC)
+## Suppose we some how reduce the search tp 8 features, we want to 6 most important ones
 ## features.started is 8 features we start from
 features.started <- tail(rownames(tumor.vs.normal.de$table),8)
-all.combinations <- combn(1:8, 4, simplify = FALSE)
+all.combinations <- combn(1:8, 6, simplify = FALSE)
 n.combinations <- length(all.combinations)
 exp.mat.started <- exp.mat[,features.started]
 
 cv.for.FS <- function(x,y){
-    set.seed(666)
+    #set.seed(666)
     rf.cv <- train(x,y,
                  method = "rf",
                  preProcess = NULL,
-                 ntree = 100,
-                 tuneLength = 1,
-                 trControl = trainControl(number = 5,method = "repeatedcv",repeats = 1,savePredictions = T,classProbs = T))
+                 ntree = 500,
+                 trControl = trainControl(method = "LOOCV",savePredictions = T,classProbs = T))
    roc.curve <- roc(rf.cv$pred$obs,rf.cv$pred$tumor)
   # See https://stats.stackexchange.com/questions/386326/appropriate-way-to-get-cross-validated-auc
   return(as.numeric(roc.curve$auc))
 }
 
-cv.aurocs <- lapply(all.combinations,function(indices,x,y){cv.for.FS(x[,indices],y)},x=exp.mat.started,y=labels)
+#cv.aurocs <- lapply(all.combinations,function(indices,x,y){cv.for.FS(x[,indices],y)},x=exp.mat.started,y=labels)
 
-# A parallel version, should be quicker
-# library(parallel)
-# cv.aurocs1 <- mclapply(all.combinations,function(indices,x,y){cv.for.FS(x[,indices],y)},x=exp.mat.started,y=labels,mc.cores=4) 
+# A parallel version, should be faster
+library(parallel)
+cv.aurocs <- mclapply(all.combinations,function(indices,x,y){cv.for.FS(x[,indices],y)},x=exp.mat.started,y=labels,mc.cores=4) 
 
-features.selected <- features.started[all.combinations[[which.max(unlist(cv.aurocs))]]]
+all.combinations[which.max(unlist(cv.aurocs))]
 
 ```
