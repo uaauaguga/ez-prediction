@@ -1,0 +1,25 @@
+---
+title: "feature-selection"
+author: "Jin"
+date: "2021年6月22日"
+output: html_document
+---
+
+
+```{R}
+sample.labels <- c("normal","normal","cancer","cancer")
+factor(sample.labels)
+as.numeric(factor(sample.labels))
+```
+
+```{R}
+factor(sample.labels,levels=c("normal","cancer"))
+as.numeric(factor(sample.labels,levels=c("normal","cancer")))
+```
+
+
+```{R}
+sample.labels.factor <- factor(sample.labels)
+sample.labels.factor
+relevel(sample.labels.factor,ref="normal")
+```

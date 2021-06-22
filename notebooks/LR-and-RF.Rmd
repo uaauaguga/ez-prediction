@@ -1,0 +1,44 @@
+---
+title: "logit models and random forests"
+author: "Jin"
+date: "2021年6月22日"
+output: html_document
+---
+
+```{R}
+data.simulated <- as.data.frame(cbind(rnorm(100),rnorm(100),rnorm(100)))
+data.simulated$y = 0.2 + 0.5*data.simulated$V1 - 0.3*data.simulated$V2 + 0.3*rnorm(100)
+data.simulated$y <- 1/(1+exp(-data.simulated$y))
+data.simulated$y <- as.factor(data.simulated$y>0.5)
+```
+
+```{R}
+logit.fitted <- glm(y~V1+V2+V3,data=data.simulated,family=binomial(link='logit'))
+summary(logit.fitted)
+```
+
+```{R}
+test.simulated <- as.data.frame(cbind(rnorm(100),rnorm(100),rnorm(100)))
+test.y <- 0.2 + 0.5*test.simulated$V1 - 0.3*test.simulated$V2 + 0.3*rnorm(100)
+test.y.prob <- 1/(1+exp(-test.y))
+test.y.predicted <- predict(logit.fitted,test.simulated,type='response')
+plot(test.y.prob,test.y.predicted)
+```
+
+
+```{R}
+library(randomForest)
+n.species <- length(levels(iris$Species))
+iris.imbalanced <- iris[-which(iris$Species=="virginica")[1:40],]
+rf.fitted <- randomForest(Species ~ Sepal.Length + Sepal.Width + Petal.Length +Petal.Width, data = iris.imbalanced,keep.inbag = TRUE)
+aggregate(rowSums(rf.fitted$inbag),by=list(iris.imbalanced$Species),FUN=sum)
+```
+
+- Summarize number of samples used
+
+```{R}
+sample.size <- rep(ceiling(nrow(iris.imbalanced)/n.species),n.species)
+sample.size
+rf.fitted.balanced <- randomForest(Species ~ Sepal.Length + Sepal.Width + Petal.Length +Petal.Width, data = iris.imbalanced,keep.inbag = TRUE,sampsize=sample.size, strata=iris$Species)
+aggregate(rowSums(rf.fitted.balanced$inbag),by=list(iris.imbalanced$Species),FUN=sum)
+```
