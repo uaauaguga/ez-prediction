@@ -76,7 +76,6 @@ head(top.50.important)
 ```{R}
 library(FSinR)
 evaluator <- filterEvaluator('ReliefFeatureSetMeasure')
-directSearcher <- directSearchAlgorithm('selectKBest', list(k=3))
 get.K.best <- selectKBest(k=6)
 ## Only take 50 features as a demo input
 exp.data <- as.data.frame(exp.mat[,1:50])
@@ -84,6 +83,28 @@ exp.data[["labels"]] <- labels
 results <- get.K.best(exp.data, "labels", evaluator)
 results$featuresSelected
 ```
+
+- Perform RFE with caret
+
+```{R}
+library(caret)
+# use ROC as metric instead of accuracy by default
+rfFuncs$summary <- twoClassSummary 
+rfectrl <- rfeControl(functions=rfFuncs,
+                      verbose = TRUE,
+                      method="repeatedcv",
+                      number=5,repeats=10)
+# Use 5 fold cross validation, repeat 10 times
+
+# Select feature set of given sizes 
+rfe.results <- rfe(exp.mat,labels, 
+               sizes=c(1,2,4,8,16,32), 
+               rfeControl=rfectrl,
+               metric = "ROC")
+predictors(rfe.results)
+rfe.results$results
+```
+
 
 
 - You can perform exhaustive search with cross-validation for feature selection
