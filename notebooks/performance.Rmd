@@ -56,7 +56,7 @@ library(ggplot2)
   - lambda: the stringency of regularization
 - `glmnet`
 ```{R}
-tuneGrid = expand.grid(alpha = 0,lambda = seq(0,0.1,length=100))
+tuneGrid = expand.grid(alpha = 0,lambda = seq(0,0.5,length=10))
 trControl = trainControl(method = "LOOCV",savePredictions = T,classProbs = T,summaryFunction = twoClassSummary)
 glmnet.cross.validation <- train(train.exp.mat,train.labels,
                  method = "glmnet",

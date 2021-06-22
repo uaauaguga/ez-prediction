@@ -432,7 +432,7 @@ library(randomForest)</code></pre>
 </ul></li>
 <li><code>glmnet</code></li>
 </ul>
-<pre class="r"><code>tuneGrid = expand.grid(alpha = 0,lambda = seq(0,0.1,length=100))
+<pre class="r"><code>tuneGrid = expand.grid(alpha = 0,lambda = seq(0,0.5,length=10))
 trControl = trainControl(method = &quot;LOOCV&quot;,savePredictions = T,classProbs = T,summaryFunction = twoClassSummary)
 glmnet.cross.validation &lt;- train(train.exp.mat,train.labels,
                  method = &quot;glmnet&quot;,
@@ -444,17 +444,17 @@ glmnet.cross.validation &lt;- train(train.exp.mat,train.labels,
 
 cv.performance &lt;- glmnet.cross.validation$results[order(glmnet.cross.validation$results$ROC,decreasing = T),]
 cv.performance[order(cv.performance$ROC,decreasing = T)[1:10],]</code></pre>
-<pre><code>##    alpha      lambda       ROC      Sens      Spec
-## 1      0 0.000000000 0.7933884 0.8181818 0.5454545
-## 2      0 0.001010101 0.7933884 0.8181818 0.5454545
-## 3      0 0.002020202 0.7933884 0.8181818 0.5454545
-## 4      0 0.003030303 0.7933884 0.8181818 0.5454545
-## 5      0 0.004040404 0.7933884 0.8181818 0.5454545
-## 6      0 0.005050505 0.7933884 0.8181818 0.5454545
-## 7      0 0.006060606 0.7933884 0.8181818 0.5454545
-## 8      0 0.007070707 0.7933884 0.8181818 0.5454545
-## 9      0 0.008080808 0.7933884 0.8181818 0.5454545
-## 10     0 0.009090909 0.7933884 0.8181818 0.5454545</code></pre>
+<pre><code>##    alpha     lambda       ROC      Sens      Spec
+## 1      0 0.00000000 0.7933884 0.8181818 0.5454545
+## 2      0 0.05555556 0.7933884 0.8181818 0.5454545
+## 3      0 0.11111111 0.7768595 0.8181818 0.4545455
+## 4      0 0.16666667 0.7520661 0.9090909 0.4545455
+## 5      0 0.22222222 0.7355372 0.9090909 0.4545455
+## 6      0 0.27777778 0.7024793 0.9090909 0.4545455
+## 7      0 0.33333333 0.6859504 0.9090909 0.4545455
+## 8      0 0.38888889 0.6859504 0.9090909 0.4545455
+## 9      0 0.44444444 0.6694215 0.8181818 0.3636364
+## 10     0 0.50000000 0.6528926 0.8181818 0.3636364</code></pre>
 <ul>
 <li>Evaluate performance
 <ul>
